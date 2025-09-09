@@ -22,6 +22,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          glow: "hsl(var(--primary-glow))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -47,6 +48,12 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Room Star semantic colors
+        architectural: "hsl(var(--architectural-blue))",
+        warm: "hsl(var(--warm-gray))",
+        space: "hsl(var(--deep-space))",
+        gold: "hsl(var(--gold-accent))",
+        soft: "hsl(var(--soft-white))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -58,10 +65,24 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      backgroundImage: {
+        'gradient-hero': 'var(--gradient-hero)',
+        'gradient-space': 'var(--gradient-space)',
+        'gradient-depth': 'var(--gradient-depth)',
+      },
+      boxShadow: {
+        elegant: 'var(--shadow-elegant)',
+        float: 'var(--shadow-float)',
+        glow: 'var(--shadow-glow)',
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      transitionTimingFunction: {
+        'smooth': 'var(--transition-smooth)',
+        'spring': 'var(--transition-spring)',
       },
       keyframes: {
         "accordion-down": {
