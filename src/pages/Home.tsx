@@ -6,9 +6,10 @@ import heroImage from "@/assets/hero-room.jpg";
 
 const Home = () => {
   const features = [
+  //Changed from "capture" to "Photograph Your Space"
     {
       icon: Camera,
-      title: "Smart Room Capture",
+      title: "Photograph Your Space",
       description: "Take photos of your space and let our AI understand your room's dimensions and layout."
     },
     {
@@ -24,8 +25,10 @@ const Home = () => {
     {
       icon: Users,
       title: "Share & Collaborate",
-      description: "Share your designs with family or get feedback from interior design professionals."
+      description: "Share your designs with family or get feedback from interior design professionals. Allow other app users to get inspriration from your designs!"
+    //Added Allow other app users to get inspriration from your designs!
     }
+
   ];
 
   return (
@@ -139,9 +142,25 @@ const Home = () => {
               );
             })}
           </div>
+           
+             {/* Added Search Bar*/}
+          {/* 🔍 Search Designers Unit */}
+          <div className="mt-16 flex flex-col items-center space-y-4">
+            <h3 className="text-2xl font-semibold">Find Inspiration from Other Designers</h3>
+            <div className="flex w-full max-w-md items-center space-x-2">
+              <input 
+                type="text" 
+                placeholder="Search designers or styles..." 
+                className="flex-1 px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gold"
+              />
+              <Button variant="gold" size="lg">
+                Search
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
-
+          
       {/* CTA Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto">
