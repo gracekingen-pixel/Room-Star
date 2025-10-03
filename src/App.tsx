@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import Camera from "./pages/Camera";
 import Design from "./pages/Design";
 import NotFound from "./pages/NotFound";
+import SearchResults from "@/pages/SearchResults";
 
 const queryClient = new QueryClient();
 
@@ -20,7 +21,7 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/camera" element={<Camera />} />
           <Route path="/design" element={<Design />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/search" element={<SearchResults />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

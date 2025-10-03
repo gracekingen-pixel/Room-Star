@@ -44,10 +44,6 @@ export const Navigation = () => {
               );
             })}
           </div>
-
-          <Button variant="hero" size="sm">
-            Get Started
-          </Button>
         </div>
       </div>
     </nav>

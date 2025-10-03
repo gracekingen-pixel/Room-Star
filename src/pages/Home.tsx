@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,8 +7,10 @@ import { Camera, Box, Sparkles, ArrowRight, Zap, Users, Shield } from "lucide-re
 import heroImage from "@/assets/hero-room.jpg";
 
 const Home = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+
   const features = [
-  //Changed from "capture" to "Photograph Your Space"
     {
       icon: Camera,
       title: "Photograph Your Space",
@@ -26,10 +30,14 @@ const Home = () => {
       icon: Users,
       title: "Share & Collaborate",
       description: "Share your designs with family or get feedback from interior design professionals. Allow other app users to get inspriration from your designs!"
-    //Added Allow other app users to get inspriration from your designs!
     }
-
   ];
+
+  const handleSearch = () => {
+    if (searchTerm.trim() !== "") {
+      navigate(`/search?query=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-space">
@@ -143,17 +151,18 @@ const Home = () => {
             })}
           </div>
            
-             {/* Added Search Bar*/}
           {/* 🔍 Search Designers Unit */}
           <div className="mt-16 flex flex-col items-center space-y-4">
             <h3 className="text-2xl font-semibold">Find Inspiration from Other Designers</h3>
             <div className="flex w-full max-w-md items-center space-x-2">
               <input 
                 type="text" 
-                placeholder="Search designers or styles..." 
+                placeholder="Search different styles and colors..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="flex-1 px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gold"
               />
-              <Button variant="gold" size="lg">
+              <Button variant="gold" size="lg" onClick={handleSearch}>
                 Search
               </Button>
             </div>
