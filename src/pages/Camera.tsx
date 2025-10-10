@@ -41,8 +41,6 @@ const furnitureDefaults: Record<string, DefaultFurniture> = {
   door: { size: [1, 2, 0.1], color: "#8B4513", shape: "box" },
   window: { size: [2, 1.5, 0.1], color: "#87CEEB", shape: "box" },
   stair_step: { size: [2, 0.2, 1], color: "#A0522D", shape: "box" },
-
-
   bed: { size: [3, 1, 4], color: "#8B4513", shape: "box" },
   nightstand: { size: [0.7, 0.7, 0.5], color: "#A0522D", shape: "box" },
   desk: { size: [2.5, 1, 1.5], color: "#CD853F", shape: "box" },
@@ -59,7 +57,6 @@ const furnitureDefaults: Record<string, DefaultFurniture> = {
   blanket: { size: [2, 0.1, 2.5], color: "#000080", shape: "rectangle" },
   plant: { size: [0.7, 1.2, 0.7], color: "#008000", shape: "sphere" },
   fan: { size: [1, 0.3, 1], color: "#808080", shape: "cylinder" },
-
   fridge: { size: [1.2, 2.2, 1.2], color: "#C0C0C0", shape: "box" },
   stove: { size: [1.2, 1.2, 1.2], color: "#2F4F4F", shape: "box" },
   microwave: { size: [0.8, 0.8, 0.8], color: "#696969", shape: "box" },
@@ -67,21 +64,17 @@ const furnitureDefaults: Record<string, DefaultFurniture> = {
   kitchenSink: { size: [1.5, 1, 1.5], color: "#B0C4DE", shape: "cylinder" },
   kitchenTable: { size: [3, 1.5, 2], color: "#8B4513", shape: "box" },
   kitchenChair: { size: [1, 1, 1], color: "#DEB887", shape: "box" },
-
   toilet: { size: [1, 1.2, 1], color: "#FFFFFF", shape: "cylinder" },
   bathroomSink: { size: [1.2, 1, 1.2], color: "#F5F5F5", shape: "cylinder" },
   shower: { size: [2, 2, 2], color: "#ADD8E6", shape: "box" },
   bathtub: { size: [2.5, 1, 1], color: "#FFFFFF", shape: "roundedBox" },
-
   washingMachine: { size: [1.2, 1.2, 1.2], color: "#C0C0C0", shape: "box" },
   dryer: { size: [1.2, 1.2, 1.2], color: "#D3D3D3", shape: "box" },
-
   sofa: { size: [3, 1.5, 2], color: "#8B0000", shape: "roundedBox" },
   coffeeTable: { size: [1.5, 0.7, 1.5], color: "#8B4513", shape: "box" },
   tvStand: { size: [2, 0.7, 1], color: "#A0522D", shape: "box" },
   television: { size: [2, 1.2, 0.1], color: "#000000", shape: "box" },
   tableLamp: { size: [0.7, 1.5, 0.7], color: "#FFA500", shape: "cylinder" },
-
   diningTable: { size: [3, 1.5, 2], color: "#8B4513", shape: "box" },
   diningChair: { size: [1, 1, 1], color: "#DEB887", shape: "box" },
 };
@@ -93,7 +86,7 @@ const roomFurniture: Record<string, string[]> = {
   kitchen: ["fridge", "stove", "microwave", "dishwasher", "kitchenSink", "kitchenTable", "kitchenChair", "window", "door", "wall"],
   bathroom: ["toilet", "bathroomSink", "shower", "bathtub", "mirror", "window", "door", "wall"],
   laundry: ["washingMachine", "dryer", "window", "door", "wall"],
-  stairwell: ["stair_step","plant", "wall", "window", "door", "bookshelf", "mirror", "ceilinglight", "fan", "lamp"]
+  stairwell: ["stair_step","plant", "wall", "window", "door", "bookshelf", "mirror", "ceilingLight", "fan", "lamp"]
 };
 
 /* --- 3D Furniture Component --- */
@@ -145,49 +138,72 @@ const FurniturePrimitive = ({
 };
 
 /* --- 3D Scene Component --- */
-export const Scene3D = ({
-  roomType,
-  existingFurniture,
-  onFurnitureChange,
-  photos,
-  onPhotosChange,
-  onBack,
-}: {
+interface Scene3DProps {
   roomType: string;
   existingFurniture?: PlacedFurniture[];
   onFurnitureChange?: (f: PlacedFurniture[]) => void;
   photos?: string[];
   onPhotosChange?: (photos: string[]) => void;
+  wallMode?: "backdrop" | "side";
+  floorColor?: string;
+  controlsRef?: React.RefObject<any>;
+  onSaveProject?: (projectData: PlacedFurniture[]) => void;
+  onReturnHome?: () => void;
   onBack?: () => void;
+}
+
+const Scene3D: React.FC<Scene3DProps> = ({
+  roomType,
+  existingFurniture,
+  onFurnitureChange,
+  photos,
+  onPhotosChange,
+  wallMode = "backdrop",
+  floorColor = "#ffffff",
+  controlsRef,
+  onSaveProject,
+  onReturnHome,
+  onBack,
 }) => {
   const [furniture, setFurniture] = useState<PlacedFurniture[]>(existingFurniture || []);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [clipboard, setClipboard] = useState<PlacedFurniture | null>(null);
+  const [wallTexture, setWallTexture] = useState<THREE.Texture | null>(null);
 
+  useEffect(() => onFurnitureChange?.(furniture), [furniture]);
+
+  /* --- Photo upload as wall texture --- */
   useEffect(() => {
-    onFurnitureChange?.(furniture);
-  }, [furniture]);
+    if (!photos || photos.length === 0) {
+      setWallTexture(null);
+      return;
+    }
+    const url = photos[photos.length - 1];
+    const loader = new THREE.TextureLoader();
+    loader.load(url, (tex) => {
+      (tex as any).encoding = (THREE as any).sRGBEncoding;
+      setWallTexture(tex);
+    });
+  }, [photos]);
 
   /* --- Handle Key Events --- */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (selectedId === null) return;
-
       const selected = furniture.find((f) => f.id === selectedId);
       if (!selected) return;
 
-      // Delete
       if (e.key === "Delete" || e.key === "Backspace") {
         setFurniture(furniture.filter((f) => f.id !== selectedId));
         setSelectedId(null);
         return;
       }
 
-      // Copy / Paste
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") {
         setClipboard(selected);
         return;
       }
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") {
         if (clipboard) {
           const newItem: PlacedFurniture = {
@@ -205,27 +221,17 @@ export const Scene3D = ({
         return;
       }
 
-      // Arrow movement
-      setFurniture((prev) =>
-        prev.map((f) => {
+      setFurniture(prev =>
+        prev.map(f => {
           if (f.id !== selectedId) return f;
           let [x, y, z] = f.position;
           switch (e.key) {
-            case "ArrowUp":
-              z -= 0.2;
-              break;
-            case "ArrowDown":
-              z += 0.2;
-              break;
-            case "ArrowLeft":
-              x -= 0.2;
-              break;
-            case "ArrowRight":
-              x += 0.2;
-              break;
+            case "ArrowUp": z -= 0.2; break;
+            case "ArrowDown": z += 0.2; break;
+            case "ArrowLeft": x -= 0.2; break;
+            case "ArrowRight": x += 0.2; break;
           }
-          const minY = f.size[1] / 2;
-          y = Math.max(y, minY);
+          y = Math.max(y, f.size[1] / 2);
           return { ...f, position: [x, y, z] };
         })
       );
@@ -251,7 +257,7 @@ export const Scene3D = ({
     setSelectedId(newItem.id);
   };
 
-  /* --- Update Furniture --- */
+  /* --- Selected Item Controls --- */
   const selectedItem = furniture.find((f) => f.id === selectedId) ?? null;
 
   const updateSize = (dim: number, val: number) => {
@@ -301,13 +307,6 @@ export const Scene3D = ({
     );
   };
 
-  /* --- Photo Upload --- */
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !onPhotosChange) return;
-    const urls = Array.from(e.target.files).map((file) => URL.createObjectURL(file));
-    onPhotosChange([...photos || [], ...urls]);
-  };
-
   return (
     <div className="flex h-screen relative">
       {/* Sidebar */}
@@ -333,24 +332,23 @@ export const Scene3D = ({
         {/* Upload Photos */}
         <div className="mt-4">
           <label className="block mb-1">Upload Photos</label>
-         <input
-  type="file"
-  multiple
-  onChange={(e) => {
-    const files = e.target.files;
-    if (!files) return;
-    const newUrls = Array.from(files).map((file) => URL.createObjectURL(file));
-    onPhotosChange?.((prev) => [...(prev || []), ...newUrls]);
-    e.target.value = ""; // reset input so same file can be uploaded again
-  }}
-  className="w-full text-black"
-/>
-
+          <input
+            type="file"
+            multiple
+            onChange={(e) => {
+              const files = e.target.files;
+              if (!files || !onPhotosChange) return;
+              const newUrls = Array.from(files).map((file) => URL.createObjectURL(file));
+              onPhotosChange([...((photos || []) as string[]), ...newUrls]);
+              e.target.value = "";
+            }}
+            className="w-full text-white"
+          />
         </div>
 
         {/* Selected Item Controls */}
         {selectedItem && (
-          <div className="mt-4 text-black overflow-y-auto space-y-2">
+          <div className="mt-4 text-white overflow-y-auto space-y-2">
             <h3 className="font-semibold">Modify Selected</h3>
             {(["X Size", "Y Size", "Z Size"] as string[]).map((label, i) => (
               <div key={i}>
