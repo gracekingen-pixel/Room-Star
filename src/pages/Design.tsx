@@ -40,7 +40,6 @@ const furnitureDefaults: Record<string, DefaultFurniture> = {
   window: { size: [2, 1.5, 0.1], color: "#87CEEB", shape: "box" },
   stair_step: { size: [2, 0.2, 1], color: "#A0522D", shape: "box" },
 
-
   bed: { size: [3, 1, 4], color: "#8B4513", shape: "box" },
   nightstand: { size: [0.7, 0.7, 0.5], color: "#A0522D", shape: "box" },
   desk: { size: [2.5, 1, 1.5], color: "#CD853F", shape: "box" },
@@ -91,7 +90,7 @@ const roomFurniture: Record<string, string[]> = {
   kitchen: ["fridge", "stove", "microwave", "dishwasher", "kitchenSink", "kitchenTable", "kitchenChair", "window", "door", "wall"],
   bathroom: ["toilet", "bathroomSink", "shower", "bathtub", "mirror", "window", "door", "wall"],
   laundry: ["washingMachine", "dryer", "window", "door", "wall"],
-  stairwell: ["stair_step","plant", "wall", "window", "door", "bookshelf", "mirror", "ceilinglight", "fan", "lamp"]
+  stairwell: ["stair_step","plant", "wall", "window", "door", "bookshelf", "mirror", "ceilingLight", "fan", "lamp"]
 };
 
 /* --- 3D Furniture Primitive --- */
@@ -151,11 +150,13 @@ export const Scene3D = ({
   existingFurniture,
   onFurnitureChange,
   onBack,
+  onSaveProject,
 }: {
   roomType: string;
   existingFurniture?: PlacedFurniture[];
   onFurnitureChange?: (f: PlacedFurniture[]) => void;
   onBack?: () => void;
+  onSaveProject?: () => void;
 }) => {
   const [furniture, setFurniture] = useState<PlacedFurniture[]>(existingFurniture || []);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -170,8 +171,7 @@ export const Scene3D = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        onFurnitureChange?.(furniture);
-        alert("Project saved!");
+        onSaveProject?.();
         return;
       }
       if (selectedId === null) return;
@@ -279,6 +279,12 @@ export const Scene3D = ({
             ← Back to Design Home
           </button>
         )}
+
+        {/* Save Project Button */}
+        <button onClick={onSaveProject} className="mb-4 w-full bg-green-600 hover:bg-green-500 p-2 rounded">
+          Save Project
+        </button>
+
         <h2 className="font-bold mb-2">Add Furniture</h2>
         <div className="flex-1 overflow-y-auto space-y-2 pr-1">
           {roomFurniture[roomType]?.map((type) => (
@@ -307,17 +313,35 @@ export const Scene3D = ({
               <button onClick={() => rotateFurniture(2, Math.PI / 12)} className="bg-blue-600 px-2 py-1 rounded">↻ Z+</button>
               <button onClick={() => rotateFurniture(2, -Math.PI / 12)} className="bg-blue-600 px-2 py-1 rounded">↺ Z-</button>
             </div>
-            <div className="mt-2">
+                        <div className="mt-2">
               <label className="block">Height (Y Position)</label>
-              <input type="range" min={0} max={10} step={0.1} value={selectedItem.position[1]} onChange={(e) => updateHeight(parseFloat(e.target.value))} className="w-full" />
+              <input
+                type="range"
+                min={0}
+                max={10}
+                step={0.1}
+                value={selectedItem.position[1]}
+                onChange={(e) => updateHeight(parseFloat(e.target.value))}
+                className="w-full"
+              />
             </div>
             <div className="mt-2">
               <label className="block">Color</label>
-              <input type="color" value={selectedItem.color || "#ffffff"} onChange={(e) => updateColor(e.target.value)} className="w-16 h-10 p-0 border-none cursor-pointer" />
+              <input
+                type="color"
+                value={selectedItem.color || "#ffffff"}
+                onChange={(e) => updateColor(e.target.value)}
+                className="w-16 h-10 p-0 border-none cursor-pointer"
+              />
             </div>
             <div className="mt-2">
               <label className="block">Notes</label>
-              <textarea value={selectedItem.note || ""} onChange={(e) => updateNote(e.target.value)} placeholder="Write a note..." className="w-full p-2 rounded text-black" />
+              <textarea
+                value={selectedItem.note || ""}
+                onChange={(e) => updateNote(e.target.value)}
+                placeholder="Write a note..."
+                className="w-full p-2 rounded text-black"
+              />
             </div>
           </div>
         )}
@@ -329,7 +353,19 @@ export const Scene3D = ({
           <pointLight position={[10, 10, 10]} />
           <Grid args={[20, 20]} cellSize={1} cellThickness={0.5} sectionSize={5} fadeDistance={30} />
           {furniture.map((item) => (
-            <FurniturePrimitive key={item.id} position={item.position} size={item.size} color={item.color} rotation={item.rotation} shape={item.shape} isSelected={selectedId === item.id} onClick={(e: any) => { e.stopPropagation(); setSelectedId(item.id); }} />
+            <FurniturePrimitive
+              key={item.id}
+              position={item.position}
+              size={item.size}
+              color={item.color}
+              rotation={item.rotation}
+              shape={item.shape}
+              isSelected={selectedId === item.id}
+              onClick={(e: any) => {
+                e.stopPropagation();
+                setSelectedId(item.id);
+              }}
+            />
           ))}
           <OrbitControls />
         </Canvas>
@@ -347,17 +383,6 @@ export default function Design() {
   });
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [currentFurniture, setCurrentFurniture] = useState<PlacedFurniture[]>([]);
-
-  useEffect(() => {
-    const handleSave = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        saveProject();
-      }
-    };
-    window.addEventListener("keydown", handleSave);
-    return () => window.removeEventListener("keydown", handleSave);
-  }, [currentFurniture, editingProject, roomType]);
 
   const saveProject = () => {
     if (!roomType) return;
@@ -404,7 +429,13 @@ export default function Design() {
           <h1 className="text-2xl font-bold">Choose a Room to Design</h1>
           <div className="flex gap-4 flex-wrap">
             {Object.keys(roomFurniture).map((room) => (
-              <button key={room} onClick={() => setRoomType(room)} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 capitalize">{room}</button>
+              <button
+                key={room}
+                onClick={() => setRoomType(room)}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 capitalize"
+              >
+                {room}
+              </button>
             ))}
           </div>
 
@@ -428,7 +459,6 @@ export default function Design() {
       </div>
     );
   }
-  
 
   return (
     <Scene3D
@@ -436,6 +466,8 @@ export default function Design() {
       existingFurniture={currentFurniture}
       onFurnitureChange={(f) => setCurrentFurniture(f)}
       onBack={() => { setRoomType(null); setEditingProject(null); setCurrentFurniture([]); }}
+      onSaveProject={saveProject} // Pass Save function to Scene3D
     />
   );
 }
+

@@ -147,7 +147,7 @@ interface Scene3DProps {
   wallMode?: "backdrop" | "side";
   floorColor?: string;
   controlsRef?: React.RefObject<any>;
-  onSaveProject?: (projectData: PlacedFurniture[]) => void;
+  onSaveProject?: () => void; // <-- added
   onReturnHome?: () => void;
   onBack?: () => void;
 }
@@ -172,7 +172,6 @@ const Scene3D: React.FC<Scene3DProps> = ({
 
   useEffect(() => onFurnitureChange?.(furniture), [furniture]);
 
-  /* --- Photo upload as wall texture --- */
   useEffect(() => {
     if (!photos || photos.length === 0) {
       setWallTexture(null);
@@ -181,12 +180,17 @@ const Scene3D: React.FC<Scene3DProps> = ({
     const url = photos[photos.length - 1];
     const loader = new THREE.TextureLoader();
     loader.load(url, (tex) => {
-      (tex as any).encoding = (THREE as any).sRGBEncoding;
+      (tex as any).colorSpace = (THREE as any).SRGBColorSpace ?? (THREE as any).sRGBEncoding ?? (tex as any).colorSpace;
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(1, 1);
       setWallTexture(tex);
+    }, undefined, (err) => {
+      console.error("Texture load error", err);
+      setWallTexture(null);
     });
   }, [photos]);
 
-  /* --- Handle Key Events --- */
+  /* --- Key Handling --- */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (selectedId === null) return;
@@ -240,7 +244,6 @@ const Scene3D: React.FC<Scene3DProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedId, furniture, clipboard]);
 
-  /* --- Add Furniture --- */
   const addFurniture = (type: string) => {
     const def = furnitureDefaults[type];
     if (!def) return;
@@ -257,7 +260,6 @@ const Scene3D: React.FC<Scene3DProps> = ({
     setSelectedId(newItem.id);
   };
 
-  /* --- Selected Item Controls --- */
   const selectedItem = furniture.find((f) => f.id === selectedId) ?? null;
 
   const updateSize = (dim: number, val: number) => {
@@ -335,12 +337,13 @@ const Scene3D: React.FC<Scene3DProps> = ({
           <input
             type="file"
             multiple
+            accept="image/*"
             onChange={(e) => {
               const files = e.target.files;
               if (!files || !onPhotosChange) return;
               const newUrls = Array.from(files).map((file) => URL.createObjectURL(file));
               onPhotosChange([...((photos || []) as string[]), ...newUrls]);
-              e.target.value = "";
+              (e.target as HTMLInputElement).value = "";
             }}
             className="w-full text-white"
           />
@@ -390,6 +393,16 @@ const Scene3D: React.FC<Scene3DProps> = ({
             </div>
           </div>
         )}
+
+        {/* Save Project Button */}
+        {onSaveProject && (
+          <button
+            onClick={onSaveProject}
+            className="mt-4 w-full bg-green-600 hover:bg-green-500 p-2 rounded text-white"
+          >
+            Save Project
+          </button>
+        )}
       </div>
 
       {/* 3D Canvas */}
@@ -410,6 +423,17 @@ const Scene3D: React.FC<Scene3DProps> = ({
               onClick={(e: any) => { e.stopPropagation(); setSelectedId(item.id); }}
             />
           ))}
+
+          {/* Back wall with uploaded photo texture applied */}
+          <mesh position={[0, 4, -5]}>
+            <boxGeometry args={[10, 8, 0.5]} />
+            {wallTexture ? (
+              <meshStandardMaterial map={wallTexture} />
+            ) : (
+              <meshStandardMaterial color="#F5F5DC" />
+            )}
+          </mesh>
+
           <OrbitControls />
         </Canvas>
 
@@ -496,6 +520,13 @@ export default function DesignPage() {
                     <div className="flex gap-2">
                       <button onClick={() => startEditingProject(p)} className="bg-green-500 text-white px-2 py-1 rounded">Edit</button>
                       <button onClick={() => deleteProject(p.id)} className="bg-red-500 text-white px-2 py-1 rounded">Delete</button>
+                      <button onClick={() => {
+                        setEditingProject(p);
+                        setRoomType(p.roomType);
+                        setCurrentFurniture(p.furniture);
+                        setPhotos(p.photos || []);
+                        saveProject();
+                      }} className="bg-blue-600 text-white px-2 py-1 rounded">Save Project</button>
                     </div>
                   </li>
                 ))}
@@ -515,6 +546,7 @@ export default function DesignPage() {
       photos={photos}
       onPhotosChange={setPhotos}
       onBack={() => { setRoomType(null); setEditingProject(null); setCurrentFurniture([]); setPhotos([]); }}
+      onSaveProject={saveProject} // <-- added
     />
   );
 }
